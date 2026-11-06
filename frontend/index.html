@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhyDesk — Metric Investigation Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F6F7F9;
+      --surface: #FFFFFF;
+      --border: #E2E5EA;
+      --text: #1A1D24;
+      --muted: #5C6573;
+      --accent: #1F5F8B;
+      --accent-subtle: #EDF3F8;
+      --accent-border: #CBD8E3;
+      --danger: #932323;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .brand h1 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+
+    .brand span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    select, input[type="text"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 5px 8px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn:hover {
+      background: #F1F3F5;
+      border-color: #D3D8E0;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #184C6F;
+      border-color: #184C6F;
+    }
+
+    .btn-secondary {
+      background: #FFFFFF;
+    }
+
+    /* Memory status toggle button */
+    .memory-toggle-btn {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .memory-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-active {
+      background-color: var(--accent);
+    }
+
+    .dot-inactive {
+      border: 1.5px solid var(--muted);
+      background-color: transparent;
+    }
+
+    .badge-backend {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Presets bar */
+    .presets-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .presets-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .presets-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .preset-btn:hover {
+      background: #EAECEF;
+      border-color: #CCD1D9;
+    }
+
+    /* Main Workspace */
+    .main-workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left panel: Chat & Investigation */
+    .left-panel {
+      flex: 0 0 55%;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    /* Right panel: Memory Inspector */
+    .right-panel {
+      flex: 0 0 45%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* Panel headers */
+    .panel-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 2px;
+    }
+
+    .tab-btn {
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    /* Investigation Chat Area */
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .query-bar {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .query-input {
+      flex: 1;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+
+    .status-indicator {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 4px 0;
+      min-height: 20px;
+    }
+
+    /* Investigation Result Cards */
+    .investigation-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .investigation-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid #F1F3F5;
+      padding-bottom: 8px;
+    }
+
+    .query-text {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Standout Answer Container */
+    .answer-box {
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .answer-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .answer-content {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      max-width: 78ch;
+      white-space: pre-wrap;
+    }
+
+    /* Diagnostic Trace Table */
+    .trace-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .trace-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .trace-table th {
+      background: #F8F9FA;
+      text-align: left;
+      padding: 6px 10px;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .trace-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #F1F3F5;
+      vertical-align: top;
+    }
+
+    .trace-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tool-name-code {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    .hit-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #E3F2E9;
+      color: #176534;
+      display: inline-block;
+      margin-left: 4px;
+    }
+
+    .trace-summary-line {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Right panel tabs content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .memory-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .memory-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .memory-type {
+      font-weight: 600;
+      text-transform: lowercase;
+      color: var(--accent);
+    }
+
+    .memory-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .memory-context {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .reflection-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .reflection-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .reflection-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .empty-state {
+      padding: 30px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Compare View Modal / Overlay */
+    .compare-container {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .compare-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .compare-col {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .compare-header {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .stat-pill {
+      font-size: 11px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .main-workspace {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .left-panel, .right-panel {
+        flex: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 50vh;
+      }
+      body {
+        overflow: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="brand">
+      <h1>WhyDesk</h1>
+      <span>Metric investigation agent with Hindsight institutional memory</span>
+    </div>
+
+    <div class="header-controls">
+      <div class="control-group">
+        <label for="stakeholderSelect" class="presets-label">Stakeholder:</label>
+        <select id="stakeholderSelect">
+          <option value="Finance Head">Finance Head</option>
+          <option value="Senior Analyst">Senior Analyst</option>
+        </select>
+      </div>
+
+      <button id="memoryToggleBtn" class="memory-toggle-btn" title="Toggle institutional memory layer">
+        <span id="memoryIndicatorDot" class="memory-indicator-dot dot-active"></span>
+        <span id="memoryToggleText">Memory on</span>
+      </button>
+
+      <span id="backendBadge" class="badge-backend">Hindsight Cloud</span>
+
+      <button id="resetMemoryBtn" class="btn btn-secondary" title="Reset bank memories">Reset memory</button>
+      <button id="seedDemoBtn" class="btn btn-secondary" title="Load Runs 1 through 4 into memory bank">Load demo history</button>
+    </div>
+  </header>
+
+  <!-- Presets Bar -->
+  <div class="presets-bar">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span class="presets-label">Preset runs:</span>
+      <div class="presets-list">
+        <button class="preset-btn" onclick="selectPreset(1)">1 Cold start (W10 South -18%)</button>
+        <button class="preset-btn" onclick="selectPreset(2)">2 ETL lag (W11 South Monday -64%)</button>
+        <button class="preset-btn" onclick="selectPreset(3)">3 Ruled out (W11 North -24%)</button>
+        <button class="preset-btn" onclick="selectPreset(4)">4 Pattern (W12 South -15%)</button>
+        <button class="preset-btn" onclick="selectPreset(5)" style="font-weight: 600; border-color: var(--accent);">5 Climax (W13 South -19%)</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="runComparison()" style="white-space: nowrap;">Compare memory on and off</button>
+  </div>
+
+  <!-- Main Split Layout -->
+  <div class="main-workspace">
+
+    <!-- Left Panel: Chat & Diagnostic Trace (55%) -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <span class="panel-title">Investigation workspace</span>
+        <span id="statusMessage" class="status-indicator">Ready</span>
+      </div>
+
+      <div id="chatScroll" class="chat-scroll">
+        <!-- Default Welcome / Instructions -->
+        <div class="investigation-card" id="welcomeCard">
+          <div class="query-text">Welcome to WhyDesk</div>
+          <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
+            Select a preset run above or enter an inquiry below. WhyDesk adapts its tool execution order, skips ruled-out checks, guards against known pipeline traps, and enforces stakeholder format preferences based on institutional memory.
+          </div>
+        </div>
+      </div>
+
+      <div class="query-bar">
+        <input type="text" id="questionInput" class="query-input" placeholder="Enter investigation inquiry (e.g., Why did revenue drop 19% in South in W13?)..." />
+        <button id="runBtn" class="btn btn-primary" onclick="submitInvestigation()">Run investigation</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Memory Inspector (45%) -->
+    <div class="right-panel">
+      <div class="panel-header">
+        <span class="panel-title">Memory inspector</span>
+        <div class="tabs-nav">
+          <button id="tabRecallBtn" class="tab-btn active" onclick="switchTab('recall')">Recall</button>
+          <button id="tabRetainedBtn" class="tab-btn" onclick="switchTab('retained')">Retained</button>
+          <button id="tabBankBtn" class="tab-btn" onclick="switchTab('bank')">Memory bank</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Recall & Reflection -->
+      <div id="tabRecall" class="tab-content">
+        <div class="empty-state" id="recallEmptyState">No memories yet. This investigation ran as a cold start or memory was OFF.</div>
+        <div id="recallItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <div id="reflectionContainer" class="reflection-box" style="display: none;">
+          <div class="reflection-title">Reflection & strategic plan</div>
+          <div id="reflectionText" class="reflection-text"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Retained Payloads -->
+      <div id="tabRetained" class="tab-content" style="display: none;">
+        <div class="empty-state" id="retainedEmptyState">No memories retained from recent run.</div>
+        <div id="retainedItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <!-- Tab 3: Full Memory Bank -->
+      <div id="tabBank" class="tab-content" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
+          <span id="bankCountLabel" style="font-size: 12px; font-weight: 600; color: var(--muted);">Total memories: 0</span>
+          <button class="btn btn-secondary" onclick="loadMemoryBank()" style="font-size: 11px; padding: 2px 6px;">Refresh bank</button>
+        </div>
+        <div id="bankItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // State
+    let useMemory = true;
+    let currentStakeholder = "Finance Head";
+    let activeTab = "recall";
+    let isBusy = false;
+
+    const PRESETS = {
+      1: {
+        stakeholder: "Finance Head",
+        memory: true,
+        question: "Why did revenue drop 18% in the South region in W10, and FYI I only ever want a 1-line summary with the exact dollar impact."
+      },
+      2: {
+        stakeholder: "Senior Analyst",
+        memory: true,
+        question: "Alert says Monday revenue in W11 is down 64% across South. Did pricing break again?"
+      },
+      3: {
+        stakeholder: "Senior Analyst",
+        memory: true,
+        question: "North hardware bundle revenue dipped 24% in W11. Sales blames a competitor promo or holiday. True?"
+      },
+      4: {
+        stakeholder: "Senior Analyst",
+        memory: true,
+        question: "South region revenue dropped 15% again in W12. Investigate."
+      },
+      5: {
+        stakeholder: "Finance Head",
+        memory: true,
+        question: "Why did revenue drop 19% in the South region in W13?"
+      }
+    };
+
+    // Initialize
+    window.addEventListener("DOMContentLoaded", () => {
+      // Default to Hindsight Cloud label immediately
+      document.getElementById("backendBadge").innerText = "Hindsight Cloud";
+      fetchHealth();
+      loadMemoryBank();
+
+      document.getElementById("stakeholderSelect").addEventListener("change", (e) => {
+        currentStakeholder = e.target.value;
+      });
+
+      document.getElementById("memoryToggleBtn").addEventListener("click", toggleMemory);
+      document.getElementById("resetMemoryBtn").addEventListener("click", resetMemoryBank);
+      document.getElementById("seedDemoBtn").addEventListener("click", seedDemoHistory);
+
+      document.getElementById("questionInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          submitInvestigation();
+        }
+      });
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const presetParam = urlParams.get("preset");
+      if (presetParam) {
+        selectPreset(parseInt(presetParam));
+      }
+    });
+
+    function toggleMemory() {
+      useMemory = !useMemory;
+      const dot = document.getElementById("memoryIndicatorDot");
+      const text = document.getElementById("memoryToggleText");
+      if (useMemory) {
+        dot.className = "memory-indicator-dot dot-active";
+        text.innerText = "Memory on";
+      } else {
+        dot.className = "memory-indicator-dot dot-inactive";
+        text.innerText = "Memory off";
+      }
+    }
+
+    async function fetchHealth() {
+      try {
+        const res = await fetch("/api/health");
+        const data = await res.json();
+        const badge = document.getElementById("backendBadge");
+        badge.innerText = data.active_memory_backend;
+        if (data.active_memory_backend === "Hindsight Cloud") {
+          badge.style.color = "#1F5F8B";
+          badge.style.borderColor = "#CBD8E3";
+        }
+      } catch (err) {
+        document.getElementById("backendBadge").innerText = "Offline";
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById("tabRecallBtn").className = "tab-btn " + (tab === 'recall' ? 'active' : '');
+      document.getElementById("tabRetainedBtn").className = "tab-btn " + (tab === 'retained' ? 'active' : '');
+      document.getElementById("tabBankBtn").className = "tab-btn " + (tab === 'bank' ? 'active' : '');
+
+      document.getElementById("tabRecall").style.display = tab === 'recall' ? 'flex' : 'none';
+      document.getElementById("tabRetained").style.display = tab === 'retained' ? 'flex' : 'none';
+      document.getElementById("tabBank").style.display = tab === 'bank' ? 'flex' : 'none';
+
+      if (tab === 'bank') {
+        loadMemoryBank();
+      }
+    }
+
+    function selectPreset(num) {
+      const p = PRESETS[num];
+      if (!p) return;
+      document.getElementById("stakeholderSelect").value = p.stakeholder;
+      currentStakeholder = p.stakeholder;
+      if (useMemory !== p.memory) {
+        toggleMemory();
+      }
+      document.getElementById("questionInput").value = p.question;
+      submitInvestigation();
+    }
+
+    function setStatus(text) {
+      document.getElementById("statusMessage").innerText = text;
+    }
+
+    async function submitInvestigation() {
+      const qInput = document.getElementById("questionInput");
+      const question = qInput.value.trim();
+      if (!question || isBusy) return;
+
+      isBusy = true;
+      document.getElementById("runBtn").disabled = true;
+      setStatus(useMemory ? "Recalling memories..." : "Running default audit...");
+
+      // Remove welcome card if present
+      const welcome = document.getElementById("welcomeCard");
+      if (welcome) welcome.remove();
+
+      try {
+        const res = await fetch("/api/investigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: question,
+            stakeholder: currentStakeholder,
+            use_memory: useMemory
+          })
+        });
+
+        const data = await res.json();
+        renderInvestigationResult(data);
+        updateInspector(data);
+        setStatus("Investigation complete (" + data.timings.total_ms + "ms)");
+      } catch (err) {
+        setStatus("Investigation failed: " + err.message);
+      } finally {
+        isBusy = false;
+        document.getElementById("runBtn").disabled = false;
+      }
+    }
+
+    function renderInvestigationResult(data) {
+      const chatScroll = document.getElementById("chatScroll");
+      const card = document.createElement("div");
+      card.className = "investigation-card";
+
+      // Meta header
+      const meta = document.createElement("div");
+      meta.className = "investigation-meta";
+      const qSpan = document.createElement("span");
+      qSpan.className = "query-text";
+      qSpan.innerText = "Inquiry: " + (document.getElementById("questionInput").value || "South W13 Revenue Drop");
+      const modeSpan = document.createElement("span");
+      modeSpan.innerText = data.use_memory ? "Memory on" : "Memory off";
+      meta.appendChild(qSpan);
+      meta.appendChild(modeSpan);
+      card.appendChild(meta);
+
+      // Diagnostic Tool Trace Table
+      const traceSec = document.createElement("div");
+      traceSec.className = "trace-section";
+
+      const table = document.createElement("table");
+      table.className = "trace-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th style="width: 45px;">Step</th>
+            <th style="width: 170px;">Tool</th>
+            <th>Finding</th>
+            <th style="width: 65px; text-align: right;">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.tool_trace.map(t => `
+            <tr>
+              <td>${t.step_index}</td>
+              <td>
+                <span class="tool-name-code">${t.tool}</span>
+                ${t.root_cause_confirmed ? '<span class="hit-badge">Confirmed</span>' : ''}
+              </td>
+              <td>${t.findings}</td>
+              <td style="text-align: right;">${t.execution_time_ms}ms</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+      traceSec.appendChild(table);
+
+      const summaryLine = document.createElement("div");
+      summaryLine.className = "trace-summary-line";
+      summaryLine.innerText = data.checks_summary;
+      traceSec.appendChild(summaryLine);
+
+      card.appendChild(traceSec);
+
+      // Standout Answer Box
+      const answerBox = document.createElement("div");
+      answerBox.className = "answer-box";
+      answerBox.innerHTML = `
+        <div class="answer-label">${data.stakeholder_format_used}</div>
+        <div class="answer-content">${data.answer}</div>
+      `;
+      card.appendChild(answerBox);
+
+      chatScroll.appendChild(card);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+
+    function updateInspector(data) {
+      // 1. Recall Tab
+      const recallEmpty = document.getElementById("recallEmptyState");
+      const recallContainer = document.getElementById("recallItemsContainer");
+      const reflectionContainer = document.getElementById("reflectionContainer");
+      const reflectionText = document.getElementById("reflectionText");
+
+      recallContainer.innerHTML = "";
+
+      if (!data.use_memory || !data.recall_results || data.recall_results.length === 0) {
+        recallEmpty.style.display = "block";
+        recallEmpty.innerText = data.use_memory
+          ? "No memories yet. This investigation ran as a cold start."
+          : "Memory is OFF. No institutional memory recall occurred.";
+        reflectionContainer.style.display = "none";
+      } else {
+        recallEmpty.style.display = "none";
+        data.recall_results.forEach(m => {
+          const item = document.createElement("div");
+          item.className = "memory-item";
+          item.innerHTML = `
+            <div class="memory-meta">
+              <span class="memory-type">${m.type || 'observation'}</span>
+              <span class="memory-context">${m.context || ''}</span>
+            </div>
+            <div class="memory-text">${m.text}</div>
+          `;
+          recallContainer.appendChild(item);
+        });
+
+        if (data.reflection) {
+          reflectionContainer.style.display = "block";
+          reflectionText.innerText = data.reflection;
+        } else {
+          reflectionContainer.style.display = "none";
+        }
+      }
+
+      // 2. Retained Tab
+      const retainedEmpty = document.getElementById("retainedEmptyState");
+      const retainedContainer = document.getElementById("retainedItemsContainer");
+      retainedContainer.innerHTML = "";
+
+      if (!data.use_memory || !data.retained_payloads || data.retained_payloads.length === 0) {
+        retainedEmpty.style.display = "block";
+        retainedEmpty.innerText = data.use_memory
+          ? "No new memories retained."
+          : "Memory was OFF. No memories were retained to bank.";
+      } else {
+        retainedEmpty.style.display = "none";
+        data.retained_payloads.forEach(m => {
+          const item = document.createElement("div");
+          item.className = "memory-item";
+          item.innerHTML = `
+            <div class="memory-meta">
+              <span class="memory-type">${m.type || 'observation'}</span>
+              <span class="memory-context">${m.context || ''}</span>
+            </div>
+            <div class="memory-text">${m.text}</div>
+          `;
+          retainedContainer.appendChild(item);
+        });
+      }
+
+      // Auto-switch to recall tab
+      if (activeTab === "recall") {
+        switchTab("recall");
+      }
+    }
+
+    async function loadMemoryBank() {
+      try {
+        const res = await fetch("/api/memories");
+        const data = await res.json();
+        document.getElementById("bankCountLabel").innerText = "Total memories: " + data.total;
+
+        const container = document.getElementById("bankItemsContainer");
+        container.innerHTML = "";
+
+        if (data.total === 0) {
+          container.innerHTML = `<div class="empty-state">Memory bank is currently empty.</div>`;
+          return;
+        }
+
+        data.memories.forEach(m => {
+          const item = document.createElement("div");
+          item.className = "memory-item";
+          item.innerHTML = `
+            <div class="memory-meta">
+              <span class="memory-type">${m.type || 'observation'}</span>
+              <span class="memory-context">${m.context || ''}</span>
+            </div>
+            <div class="memory-text">${m.text}</div>
+          `;
+          container.appendChild(item);
+        });
+      } catch (err) {
+        document.getElementById("bankItemsContainer").innerHTML =
+          `<div class="empty-state">Failed to load memory bank.</div>`;
+      }
+    }
+
+    async function resetMemoryBank() {
+      if (!confirm("Reset memory bank? All institutional memories will be cleared.")) return;
+      setStatus("Resetting memory bank...");
+      try {
+        const res = await fetch("/api/reset-memory", { method: "POST" });
+        const data = await res.json();
+        setStatus(data.message);
+        loadMemoryBank();
+        switchTab("recall");
+        document.getElementById("recallEmptyState").innerText = "No memories yet. Bank is empty.";
+        document.getElementById("recallItemsContainer").innerHTML = "";
+        document.getElementById("reflectionContainer").style.display = "none";
+      } catch (err) {
+        setStatus("Failed to reset memory: " + err.message);
+      }
+    }
+
+    async function seedDemoHistory() {
+      setStatus("Seeding demo history (Runs 1 to 4 on live pipeline)...");
+      try {
+        const res = await fetch("/api/seed-demo", { method: "POST" });
+        const data = await res.json();
+        setStatus("Seeded 4 demo runs successfully. Prime for Run 5.");
+        loadMemoryBank();
+        switchTab("bank");
+      } catch (err) {
+        setStatus("Failed to seed demo history: " + err.message);
+      }
+    }
+
+    async function runComparison() {
+      const question = "Why did revenue drop 19% in the South region in W13?";
+      setStatus("Executing side-by-side comparison for Run 5...");
+
+      const chatScroll = document.getElementById("chatScroll");
+      const compCard = document.createElement("div");
+      compCard.className = "compare-container";
+      compCard.innerHTML = `<div style="font-weight: 600; font-size: 13px;">Comparison: "${question}"</div>`;
+
+      const cols = document.createElement("div");
+      cols.className = "compare-columns";
+
+      // 1. Run with Memory ON
+      const resOn = await fetch("/api/investigate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: true })
+      }).then(r => r.json());
+
+      // 2. Run with Memory OFF
+      const resOff = await fetch("/api/investigate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: false })
+      }).then(r => r.json());
+
+      cols.innerHTML = `
+        <div class="compare-col">
+          <div class="compare-header">
+            <span>Memory ON</span>
+            <span class="stat-pill">${resOn.tool_trace.length} tools • ${resOn.timings.total_ms}ms</span>
+          </div>
+          <div style="font-size: 12px; color: var(--muted);">${resOn.checks_summary}</div>
+          <div class="answer-box" style="margin-top: 6px;">
+            <div class="answer-label">${resOn.stakeholder_format_used}</div>
+            <div class="answer-content">${resOn.answer}</div>
+          </div>
+        </div>
+
+        <div class="compare-col">
+          <div class="compare-header">
+            <span>Memory OFF (Stateless)</span>
+            <span class="stat-pill">${resOff.tool_trace.length} tools • ${resOff.timings.total_ms}ms</span>
+          </div>
+          <div style="font-size: 12px; color: var(--muted);">${resOff.checks_summary}</div>
+          <div class="answer-box" style="margin-top: 6px; background: #FFFFFF; border-color: var(--border);">
+            <div class="answer-label">${resOff.stakeholder_format_used}</div>
+            <div class="answer-content">${resOff.answer}</div>
+          </div>
+        </div>
+      `;
+
+      compCard.appendChild(cols);
+      chatScroll.appendChild(compCard);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+      setStatus("Comparison completed.");
+    }
+  </script>
+</body>
+</html>
