@@ -12,7 +12,6 @@ from backend.tools import (
     execute_tool,
 )
 from backend.memory import WhyDeskMemory
-from backend.seed_data import CASES
 
 try:
     from groq import Groq, BadRequestError
@@ -113,6 +112,107 @@ def build_template_answer(
     return "\n".join(lines)
 
 
+TOOL_KEYWORD_MAP = {
+    "check_etl_pipeline": ["etl", "pipeline", "etl_sales_sync", "data lag", "pipeline reliability", "sync lag"],
+    "check_pricing_changes": ["pricing", "discount", "repricing", "promo", "voucher", "tier", "price", "acv"],
+    "check_inventory_stockouts": ["inventory", "stockout", "out of stock", "sku", "warehouse", "backlog"],
+    "check_competitor_promos": ["competitor", "competitor promo", "rival"],
+    "check_holiday_calendar": ["holiday", "calendar", "national holiday"],
+}
+
+
+def plan_tool_order_and_rules(
+    recalled_memories: List[Dict[str, Any]],
+    reflection: str,
+    question: str,
+) -> Tuple[List[str], Set[str], List[str]]:
+    """Derive tool execution order, deprioritized tool set, and prioritized list
+    strictly from recalled memories, reflection text, and question context.
+    Zero hardcoded region/week/case rules.
+    """
+    ref_lower = reflection.lower()
+    mem_texts = [m.get("text", "").lower() for m in recalled_memories]
+    all_mem_text = " ".join(mem_texts)
+
+    # 1. Identify deprioritized / ruled-out tools from recalled memories and reflection
+    deprioritized_tools: Set[str] = set()
+
+    # Check reflection for deprioritize directives
+    deprioritize_match = re.search(r"deprioritize\s+([^.]+)", ref_lower)
+    dep_text = deprioritize_match.group(1) if deprioritize_match else ""
+
+    # Check memories for "ruled-out: ..."
+    ruled_out_matches = re.findall(r"ruled-out:\s*([^.]+)", all_mem_text)
+    ruled_out_text = dep_text + " " + " ".join(ruled_out_matches)
+
+    for tool_name, keywords in TOOL_KEYWORD_MAP.items():
+        if any(kw in ruled_out_text for kw in keywords):
+            deprioritized_tools.add(tool_name)
+
+    # Also check memory metadata for explicitly stored ruled_out lists
+    for m in recalled_memories:
+        meta_ruled = m.get("metadata", {}).get("ruled_out") or []
+        if isinstance(meta_ruled, list):
+            for r in meta_ruled:
+                r_lower = r.lower()
+                for tool_name, keywords in TOOL_KEYWORD_MAP.items():
+                    if any(kw in r_lower for kw in keywords):
+                        deprioritized_tools.add(tool_name)
+
+    # 2. Identify prioritized tools from reflection and recalled memory patterns
+    prioritized_tools: List[str] = []
+
+    # Check if reflection explicitly names tools to prioritize/check first
+    tool_mentions_in_reflection = []
+    for tool_name in DEFAULT_TOOL_AUDIT_ORDER:
+        idx = ref_lower.find(tool_name)
+        if idx != -1:
+            dep_idx = ref_lower.find("deprioritize")
+            if dep_idx == -1 or idx < dep_idx:
+                tool_mentions_in_reflection.append((idx, tool_name))
+
+    if tool_mentions_in_reflection:
+        tool_mentions_in_reflection.sort(key=lambda x: x[0])
+        prioritized_tools = [t[1] for t in tool_mentions_in_reflection]
+    else:
+        # Infer priorities from memory text patterns if reflection didn't name exact tool IDs
+        inferred = []
+        has_etl_trap = any(
+            "etl" in t or "pipeline" in t for t in mem_texts
+        ) or any(m.get("context") == "data_pipeline_reliability" for m in recalled_memories)
+        if has_etl_trap or "etl" in ref_lower:
+            inferred.append("check_etl_pipeline")
+
+        has_pricing = any("pricing" in t or "discount" in t or "promo" in t for t in mem_texts)
+        if has_pricing or "pricing" in ref_lower:
+            inferred.append("check_pricing_changes")
+
+        has_inventory = any("stockout" in t or "inventory" in t or "sku" in t for t in mem_texts)
+        if has_inventory or "inventory" in ref_lower or "stockout" in ref_lower:
+            inferred.append("check_inventory_stockouts")
+
+        prioritized_tools = [t for t in inferred if t not in deprioritized_tools]
+
+    # 3. Assemble full tool execution order: Prioritized -> Neutral -> Deprioritized
+    # Prioritized tools cannot be deprioritized
+    deprioritized_tools = deprioritized_tools - set(prioritized_tools)
+
+    ordered: List[str] = []
+    for t in prioritized_tools:
+        if t not in ordered and t not in deprioritized_tools:
+            ordered.append(t)
+
+    for t in DEFAULT_TOOL_AUDIT_ORDER:
+        if t not in ordered and t not in deprioritized_tools:
+            ordered.append(t)
+
+    for t in DEFAULT_TOOL_AUDIT_ORDER:
+        if t in deprioritized_tools and t not in ordered:
+            ordered.append(t)
+
+    return ordered, deprioritized_tools, prioritized_tools
+
+
 def run_deterministic_investigation(
     question: str,
     region: str,
@@ -120,7 +220,7 @@ def run_deterministic_investigation(
     stakeholder: str,
     use_memory: bool,
     recalled_memories: List[Dict[str, Any]],
-    is_monday: bool,
+    reflection: str,
     progress_steps: List[str],
 ) -> Tuple[List[Dict[str, Any]], List[str], Optional[str], Optional[Dict[str, Any]]]:
     """Execute diagnostic tools with adaptive ordering when memory is ON, or default order when OFF."""
@@ -131,59 +231,21 @@ def run_deterministic_investigation(
 
     # Determine tool execution plan
     if not use_memory or len(recalled_memories) == 0:
-        # Memory OFF or Cold Start: Run all 5 tools in default audit order
+        # Memory OFF or Cold Start: Run all 5 tools in default audit order with no early stop
         tool_order = list(DEFAULT_TOOL_AUDIT_ORDER)
         allow_early_stop = False
+        deprioritized_tools: Set[str] = set()
+        prioritized_tools: List[str] = []
     else:
-        # Memory ON: Adaptive ordering based on institutional memory patterns
+        # Memory ON: Adaptive ordering derived strictly from recalled memories and reflection output
         allow_early_stop = True
-        has_etl_trap = any(
-            "etl" in m["text"].lower() or "pipeline" in m["text"].lower()
-            for m in recalled_memories
-        )
-        has_pricing_cause = any(
-            "pricing" in m["text"].lower() or "discount" in m["text"].lower()
-            for m in recalled_memories
+        tool_order, deprioritized_tools, prioritized_tools = plan_tool_order_and_rules(
+            recalled_memories=recalled_memories,
+            reflection=reflection,
+            question=question,
         )
 
-        if is_monday or "monday" in question.lower():
-            # Prioritize ETL pipeline check first for Monday alerts
-            tool_order = [
-                "check_etl_pipeline",
-                "check_pricing_changes",
-                "check_inventory_stockouts",
-                "check_competitor_promos",
-                "check_holiday_calendar",
-            ]
-        elif region.lower() == "south" and has_pricing_cause:
-            # South pattern: ETL sanity check first, then pricing
-            tool_order = [
-                "check_etl_pipeline",
-                "check_pricing_changes",
-                "check_inventory_stockouts",
-                "check_competitor_promos",
-                "check_holiday_calendar",
-            ]
-        elif region.lower() == "north":
-            # North inquiry: Address competitor/holiday hypotheses, then inventory
-            tool_order = [
-                "check_holiday_calendar",
-                "check_competitor_promos",
-                "check_inventory_stockouts",
-                "check_pricing_changes",
-                "check_etl_pipeline",
-            ]
-        else:
-            tool_order = [
-                "check_etl_pipeline",
-                "check_pricing_changes",
-                "check_inventory_stockouts",
-                "check_competitor_promos",
-                "check_holiday_calendar",
-            ]
-
-    step_idx = 1
-    for tool_name in tool_order:
+    for step_idx, tool_name in enumerate(tool_order, start=1):
         progress_steps.append(f"Running {tool_name}")
         result, elapsed_ms = execute_tool(tool_name, region, week)
         executed_tools.append(tool_name)
@@ -202,16 +264,18 @@ def run_deterministic_investigation(
                 "raw_result": result,
             }
         )
-        step_idx += 1
 
         if is_hit:
             confirming_tool = tool_name
             confirming_result = result
-            # Early stop condition:
-            # Memory is ON, root cause confirmed, and prior memory ruled out remaining checks
+            # Early stop when memory is ON:
+            # If all remaining unexecuted tools were ruled out or deprioritized by memory/reflection,
+            # or if confirmed root cause was found among prioritized tools and remaining tools are not prioritized
             if allow_early_stop:
-                # If ETL was healthy (clean) and pricing was confirmed, or ETL itself was the root cause
-                if tool_name == "check_pricing_changes" or tool_name == "check_etl_pipeline" or tool_name == "check_inventory_stockouts":
+                remaining_tools = tool_order[step_idx:]
+                if not remaining_tools or all(t in deprioritized_tools for t in remaining_tools):
+                    break
+                if tool_name in prioritized_tools and not any(t in prioritized_tools for t in remaining_tools):
                     break
 
     skipped_tools = [t for t in DEFAULT_TOOL_AUDIT_ORDER if t not in executed_tools]
@@ -282,7 +346,7 @@ class WhyDeskAgent:
             stakeholder=stakeholder,
             use_memory=use_memory,
             recalled_memories=recalled_memories,
-            is_monday=is_monday,
+            reflection=reflection,
             progress_steps=progress_steps,
         )
         timings["tool_execution_ms"] = max(1, int((time.perf_counter() - t_tools_start) * 1000))

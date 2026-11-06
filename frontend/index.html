@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhyDesk — Metric Investigation Agent</title>
+  <title>WhyDesk — Metric investigation agent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,9 +15,8 @@
       --text: #1A1D24;
       --muted: #5C6573;
       --accent: #1F5F8B;
-      --accent-subtle: #EDF3F8;
-      --accent-border: #CBD8E3;
-      --danger: #932323;
+      --accent-subtle: #EEF4F8;
+      --accent-border: #CADBE7;
       --radius-sm: 6px;
       --radius-md: 8px;
     }
@@ -28,6 +27,8 @@
       padding: 0;
       font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
+      animation: none !important;
+      transition: none !important;
     }
 
     body {
@@ -41,13 +42,6 @@
       overflow: hidden;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-
     /* Header */
     header {
       background: var(--surface);
@@ -57,12 +51,13 @@
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
+      height: 52px;
     }
 
     .brand {
       display: flex;
       align-items: baseline;
-      gap: 10px;
+      gap: 12px;
     }
 
     .brand h1 {
@@ -80,7 +75,7 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .control-group {
@@ -88,13 +83,14 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
+      color: var(--muted);
     }
 
     select, input[type="text"] {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 5px 8px;
+      padding: 5px 9px;
       font-size: 13px;
       color: var(--text);
       outline: none;
@@ -108,19 +104,23 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 5px 10px;
+      padding: 5px 11px;
       font-size: 13px;
       color: var(--text);
       cursor: pointer;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
     }
 
     .btn:hover {
       background: #F1F3F5;
       border-color: #D3D8E0;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .btn-primary {
@@ -135,51 +135,57 @@
     }
 
     .btn-secondary {
-      background: #FFFFFF;
+      background: var(--surface);
     }
 
-    /* Memory status toggle button */
+    /* Memory state indicator */
     .memory-toggle-btn {
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 9px;
+      gap: 7px;
+      padding: 5px 10px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       background: var(--surface);
       font-size: 13px;
       font-weight: 500;
+      color: var(--text);
     }
 
-    .memory-indicator-dot {
-      width: 8px;
-      height: 8px;
+    .memory-toggle-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .memory-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       display: inline-block;
     }
 
-    .dot-active {
+    .dot-on {
       background-color: var(--accent);
     }
 
-    .dot-inactive {
+    .dot-off {
       border: 1.5px solid var(--muted);
       background-color: transparent;
+      box-sizing: border-box;
     }
 
-    .badge-backend {
-      font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: var(--accent-subtle);
-      border: 1px solid var(--accent-border);
-      color: var(--accent);
-      font-weight: 500;
+    .backend-label {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
     }
 
-    /* Presets bar */
-    .presets-bar {
+    /* Preset row */
+    .preset-row {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 8px 20px;
@@ -188,23 +194,23 @@
       justify-content: space-between;
       flex-shrink: 0;
       gap: 8px;
+      height: 44px;
     }
 
-    .presets-label {
+    .preset-label {
       font-size: 12px;
       color: var(--muted);
       font-weight: 500;
-      white-space: nowrap;
     }
 
-    .presets-list {
+    .preset-buttons {
       display: flex;
       gap: 6px;
-      flex-wrap: wrap;
+      align-items: center;
     }
 
     .preset-btn {
-      padding: 4px 8px;
+      padding: 4px 10px;
       font-size: 12px;
       background: var(--bg);
       border: 1px solid var(--border);
@@ -218,14 +224,25 @@
       border-color: #CCD1D9;
     }
 
-    /* Main Workspace */
-    .main-workspace {
+    .preset-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .preset-btn.active {
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Workspace split */
+    .workspace {
       display: flex;
       flex: 1;
+      height: calc(100vh - 96px);
       overflow: hidden;
     }
 
-    /* Left panel: Chat & Investigation */
+    /* Left panel: 55% */
     .left-panel {
       flex: 0 0 55%;
       border-right: 1px solid var(--border);
@@ -233,26 +250,29 @@
       flex-direction: column;
       background: var(--surface);
       overflow: hidden;
+      height: 100%;
     }
 
-    /* Right panel: Memory Inspector */
+    /* Right panel: 45% */
     .right-panel {
       flex: 0 0 45%;
       display: flex;
       flex-direction: column;
       background: var(--bg);
       overflow: hidden;
+      height: 100%;
     }
 
-    /* Panel headers */
+    /* Panel header */
     .panel-header {
-      padding: 10px 16px;
+      padding: 10px 18px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
+      height: 42px;
     }
 
     .panel-title {
@@ -261,67 +281,75 @@
       color: var(--text);
     }
 
-    /* Tabs */
+    .status-text {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Tabs nav */
     .tabs-nav {
       display: flex;
-      gap: 2px;
+      gap: 3px;
     }
 
     .tab-btn {
-      padding: 4px 10px;
+      padding: 4px 11px;
       background: transparent;
       border: 1px solid transparent;
       border-radius: var(--radius-sm);
       font-size: 12px;
-      font-weight: 500;
       color: var(--muted);
       cursor: pointer;
     }
 
-    .tab-btn.active {
-      background: var(--surface);
-      border-color: var(--border);
+    .tab-btn:hover {
       color: var(--text);
     }
 
-    /* Investigation Chat Area */
+    .tab-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .tab-btn.active {
+      background: var(--bg);
+      border-color: var(--border);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Chat area */
     .chat-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
 
     .query-bar {
-      padding: 12px 16px;
+      padding: 12px 18px;
       border-top: 1px solid var(--border);
       background: var(--surface);
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .query-input {
       flex: 1;
-      padding: 7px 10px;
+      padding: 7px 11px;
       font-size: 13px;
     }
 
-    .status-indicator {
-      font-size: 12px;
-      color: var(--muted);
-      padding: 4px 0;
-      min-height: 20px;
-    }
-
-    /* Investigation Result Cards */
+    /* Cards */
     .investigation-card {
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: var(--surface);
-      padding: 14px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -333,39 +361,17 @@
       align-items: center;
       font-size: 12px;
       color: var(--muted);
+      padding-bottom: 6px;
       border-bottom: 1px solid #F1F3F5;
-      padding-bottom: 8px;
     }
 
-    .query-text {
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    /* Standout Answer Container */
-    .answer-box {
-      background: var(--accent-subtle);
-      border: 1px solid var(--accent-border);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-    }
-
-    .answer-label {
-      font-size: 11px;
+    .query-heading {
       font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-
-    .answer-content {
-      font-size: 14px;
       color: var(--text);
-      line-height: 1.5;
-      max-width: 78ch;
-      white-space: pre-wrap;
+      font-size: 13px;
     }
 
-    /* Diagnostic Trace Table */
+    /* Trace Table */
     .trace-section {
       display: flex;
       flex-direction: column;
@@ -378,7 +384,6 @@
       font-size: 12px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      overflow: hidden;
     }
 
     .trace-table th {
@@ -400,34 +405,59 @@
       border-bottom: none;
     }
 
-    .tool-name-code {
+    .tool-code {
       font-family: "IBM Plex Mono", monospace;
       font-size: 11px;
       color: var(--text);
     }
 
-    .hit-badge {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: #E3F2E9;
-      color: #176534;
-      display: inline-block;
-      margin-left: 4px;
-    }
-
     .trace-summary-line {
       font-size: 12px;
       color: var(--muted);
-      font-style: italic;
     }
 
-    /* Right panel tabs content */
+    /* Answer box */
+    .answer-box {
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .answer-box-plain {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .answer-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+
+    .answer-label-muted {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .answer-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+      max-width: 78ch;
+      white-space: pre-wrap;
+    }
+
+    /* Inspector tabs content */
     .tab-content {
       flex: 1;
       overflow-y: auto;
-      padding: 14px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -440,7 +470,7 @@
       padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
     }
 
     .memory-meta {
@@ -452,9 +482,9 @@
     }
 
     .memory-type {
-      font-weight: 600;
-      text-transform: lowercase;
-      color: var(--accent);
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 11px;
     }
 
     .memory-text {
@@ -469,11 +499,22 @@
       color: var(--muted);
     }
 
+    .payload-json {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
     .reflection-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 12px;
+      padding: 12px 14px;
     }
 
     .reflection-title {
@@ -483,7 +524,7 @@
       margin-bottom: 6px;
     }
 
-    .reflection-text {
+    .reflection-content {
       font-size: 13px;
       color: var(--text);
       line-height: 1.5;
@@ -491,40 +532,48 @@
     }
 
     .empty-state {
-      padding: 30px 16px;
+      padding: 32px 16px;
       text-align: center;
       color: var(--muted);
       font-size: 13px;
     }
 
-    /* Compare View Modal / Overlay */
-    .compare-container {
+    /* Compare view */
+    .compare-card {
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       background: var(--surface);
-      padding: 14px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
 
-    .compare-columns {
+    .compare-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
     }
 
-    .compare-col {
+    .compare-pane {
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 12px;
-      background: #FAFAFA;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    .compare-header {
+    .compare-pane-title {
       font-size: 13px;
       font-weight: 600;
       display: flex;
@@ -534,25 +583,25 @@
       padding-bottom: 6px;
     }
 
-    .stat-pill {
+    .compare-meta-stat {
       font-size: 11px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1px 6px;
+      color: var(--muted);
+      font-weight: normal;
     }
 
     /* Responsive */
     @media (max-width: 1024px) {
-      .main-workspace {
+      .workspace {
         flex-direction: column;
+        height: auto;
         overflow-y: auto;
       }
       .left-panel, .right-panel {
         flex: auto;
         border-right: none;
         border-bottom: 1px solid var(--border);
-        max-height: 50vh;
+        height: auto;
+        min-height: 400px;
       }
       body {
         overflow: auto;
@@ -562,76 +611,75 @@
 </head>
 <body>
 
-  <!-- App Header -->
+  <!-- Header -->
   <header>
     <div class="brand">
       <h1>WhyDesk</h1>
-      <span>Metric investigation agent with Hindsight institutional memory</span>
+      <span>Metric investigation agent</span>
     </div>
 
     <div class="header-controls">
       <div class="control-group">
-        <label for="stakeholderSelect" class="presets-label">Stakeholder:</label>
+        <label for="stakeholderSelect">Stakeholder:</label>
         <select id="stakeholderSelect">
           <option value="Finance Head">Finance Head</option>
           <option value="Senior Analyst">Senior Analyst</option>
         </select>
       </div>
 
-      <button id="memoryToggleBtn" class="memory-toggle-btn" title="Toggle institutional memory layer">
-        <span id="memoryIndicatorDot" class="memory-indicator-dot dot-active"></span>
-        <span id="memoryToggleText">Memory on</span>
+      <button id="memoryToggleBtn" class="memory-toggle-btn" title="Toggle memory layer">
+        <span id="memoryDot" class="memory-dot dot-on"></span>
+        <span id="memoryText">Memory on</span>
       </button>
 
-      <span id="backendBadge" class="badge-backend">Hindsight Cloud</span>
+      <span id="backendLabel" class="backend-label">Hindsight Cloud</span>
 
-      <button id="resetMemoryBtn" class="btn btn-secondary" title="Reset bank memories">Reset memory</button>
-      <button id="seedDemoBtn" class="btn btn-secondary" title="Load Runs 1 through 4 into memory bank">Load demo history</button>
+      <button id="resetMemoryBtn" class="btn btn-secondary">Reset memory</button>
+      <button id="seedDemoBtn" class="btn btn-secondary">Load demo history</button>
     </div>
   </header>
 
-  <!-- Presets Bar -->
-  <div class="presets-bar">
-    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-      <span class="presets-label">Preset runs:</span>
-      <div class="presets-list">
-        <button class="preset-btn" onclick="selectPreset(1)">1 Cold start (W10 South -18%)</button>
-        <button class="preset-btn" onclick="selectPreset(2)">2 ETL lag (W11 South Monday -64%)</button>
-        <button class="preset-btn" onclick="selectPreset(3)">3 Ruled out (W11 North -24%)</button>
-        <button class="preset-btn" onclick="selectPreset(4)">4 Pattern (W12 South -15%)</button>
-        <button class="preset-btn" onclick="selectPreset(5)" style="font-weight: 600; border-color: var(--accent);">5 Climax (W13 South -19%)</button>
+  <!-- Preset row -->
+  <div class="preset-row">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="preset-label">Presets:</span>
+      <div class="preset-buttons">
+        <button class="preset-btn" onclick="runPreset(1)">Run 1: Cold start</button>
+        <button class="preset-btn" onclick="runPreset(2)">Run 2: Unreliable pipeline</button>
+        <button class="preset-btn" onclick="runPreset(3)">Run 3: Ruled-out hypotheses</button>
+        <button class="preset-btn" onclick="runPreset(4)">Run 4: Pattern consolidation</button>
+        <button class="preset-btn active" onclick="runPreset(5)">Run 5: Climax</button>
       </div>
     </div>
-    <button class="btn btn-secondary" onclick="runComparison()" style="white-space: nowrap;">Compare memory on and off</button>
+    <button class="btn btn-secondary" onclick="runCompareView()">Compare memory on and off</button>
   </div>
 
-  <!-- Main Split Layout -->
-  <div class="main-workspace">
+  <!-- Main workspace -->
+  <div class="workspace">
 
-    <!-- Left Panel: Chat & Diagnostic Trace (55%) -->
+    <!-- Left panel (55%): Chat and trace -->
     <div class="left-panel">
       <div class="panel-header">
-        <span class="panel-title">Investigation workspace</span>
-        <span id="statusMessage" class="status-indicator">Ready</span>
+        <span class="panel-title">Investigation trace</span>
+        <span id="statusText" class="status-text">Ready</span>
       </div>
 
       <div id="chatScroll" class="chat-scroll">
-        <!-- Default Welcome / Instructions -->
-        <div class="investigation-card" id="welcomeCard">
-          <div class="query-text">Welcome to WhyDesk</div>
-          <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
-            Select a preset run above or enter an inquiry below. WhyDesk adapts its tool execution order, skips ruled-out checks, guards against known pipeline traps, and enforces stakeholder format preferences based on institutional memory.
+        <div class="investigation-card" id="emptyChatState">
+          <div class="query-heading">No investigation run yet</div>
+          <div style="font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 70ch;">
+            Select a preset run above or enter an inquiry below to run a diagnostic investigation. With memory on, prior investigations inform tool ordering, skip previously ruled-out causes, and respect stakeholder formats.
           </div>
         </div>
       </div>
 
       <div class="query-bar">
-        <input type="text" id="questionInput" class="query-input" placeholder="Enter investigation inquiry (e.g., Why did revenue drop 19% in South in W13?)..." />
+        <input type="text" id="questionInput" class="query-input" placeholder="Enter investigation inquiry..." />
         <button id="runBtn" class="btn btn-primary" onclick="submitInvestigation()">Run investigation</button>
       </div>
     </div>
 
-    <!-- Right Panel: Memory Inspector (45%) -->
+    <!-- Right panel (45%): Memory inspector with 3 tabs -->
     <div class="right-panel">
       <div class="panel-header">
         <span class="panel-title">Memory inspector</span>
@@ -642,27 +690,27 @@
         </div>
       </div>
 
-      <!-- Tab 1: Recall & Reflection -->
+      <!-- Tab 1: Recall -->
       <div id="tabRecall" class="tab-content">
-        <div class="empty-state" id="recallEmptyState">No memories yet. This investigation ran as a cold start or memory was OFF.</div>
+        <div class="empty-state" id="recallEmptyState">No memories yet.</div>
         <div id="recallItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
         <div id="reflectionContainer" class="reflection-box" style="display: none;">
-          <div class="reflection-title">Reflection & strategic plan</div>
-          <div id="reflectionText" class="reflection-text"></div>
+          <div class="reflection-title">Reflection</div>
+          <div id="reflectionContent" class="reflection-content"></div>
         </div>
       </div>
 
-      <!-- Tab 2: Retained Payloads -->
+      <!-- Tab 2: Retained -->
       <div id="tabRetained" class="tab-content" style="display: none;">
         <div class="empty-state" id="retainedEmptyState">No memories retained from recent run.</div>
         <div id="retainedItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
 
-      <!-- Tab 3: Full Memory Bank -->
+      <!-- Tab 3: Memory bank -->
       <div id="tabBank" class="tab-content" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px;">
-          <span id="bankCountLabel" style="font-size: 12px; font-weight: 600; color: var(--muted);">Total memories: 0</span>
-          <button class="btn btn-secondary" onclick="loadMemoryBank()" style="font-size: 11px; padding: 2px 6px;">Refresh bank</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 2px;">
+          <span id="bankTotalCount" style="font-size: 12px; font-weight: 600; color: var(--muted);">Total memories: 0</span>
+          <button class="btn btn-secondary" onclick="loadBankMemories()" style="font-size: 11px; padding: 2px 7px;">Refresh list</button>
         </div>
         <div id="bankItemsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
@@ -672,11 +720,10 @@
   </div>
 
   <script>
-    // State
     let useMemory = true;
     let currentStakeholder = "Finance Head";
     let activeTab = "recall";
-    let isBusy = false;
+    let isExecuting = false;
 
     const PRESETS = {
       1: {
@@ -706,12 +753,9 @@
       }
     };
 
-    // Initialize
     window.addEventListener("DOMContentLoaded", () => {
-      // Default to Hindsight Cloud label immediately
-      document.getElementById("backendBadge").innerText = "Hindsight Cloud";
       fetchHealth();
-      loadMemoryBank();
+      loadBankMemories();
 
       document.getElementById("stakeholderSelect").addEventListener("change", (e) => {
         currentStakeholder = e.target.value;
@@ -726,23 +770,17 @@
           submitInvestigation();
         }
       });
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const presetParam = urlParams.get("preset");
-      if (presetParam) {
-        selectPreset(parseInt(presetParam));
-      }
     });
 
     function toggleMemory() {
       useMemory = !useMemory;
-      const dot = document.getElementById("memoryIndicatorDot");
-      const text = document.getElementById("memoryToggleText");
+      const dot = document.getElementById("memoryDot");
+      const text = document.getElementById("memoryText");
       if (useMemory) {
-        dot.className = "memory-indicator-dot dot-active";
+        dot.className = "memory-dot dot-on";
         text.innerText = "Memory on";
       } else {
-        dot.className = "memory-indicator-dot dot-inactive";
+        dot.className = "memory-dot dot-off";
         text.innerText = "Memory off";
       }
     }
@@ -751,14 +789,9 @@
       try {
         const res = await fetch("/api/health");
         const data = await res.json();
-        const badge = document.getElementById("backendBadge");
-        badge.innerText = data.active_memory_backend;
-        if (data.active_memory_backend === "Hindsight Cloud") {
-          badge.style.color = "#1F5F8B";
-          badge.style.borderColor = "#CBD8E3";
-        }
+        document.getElementById("backendLabel").innerText = data.active_memory_backend || "Hindsight Cloud";
       } catch (err) {
-        document.getElementById("backendBadge").innerText = "Offline";
+        document.getElementById("backendLabel").innerText = "Offline";
       }
     }
 
@@ -773,11 +806,11 @@
       document.getElementById("tabBank").style.display = tab === 'bank' ? 'flex' : 'none';
 
       if (tab === 'bank') {
-        loadMemoryBank();
+        loadBankMemories();
       }
     }
 
-    function selectPreset(num) {
+    function runPreset(num) {
       const p = PRESETS[num];
       if (!p) return;
       document.getElementById("stakeholderSelect").value = p.stakeholder;
@@ -789,22 +822,21 @@
       submitInvestigation();
     }
 
-    function setStatus(text) {
-      document.getElementById("statusMessage").innerText = text;
+    function setStatus(msg) {
+      document.getElementById("statusText").innerText = msg;
     }
 
     async function submitInvestigation() {
       const qInput = document.getElementById("questionInput");
       const question = qInput.value.trim();
-      if (!question || isBusy) return;
+      if (!question || isExecuting) return;
 
-      isBusy = true;
+      isExecuting = true;
       document.getElementById("runBtn").disabled = true;
-      setStatus(useMemory ? "Recalling memories..." : "Running default audit...");
+      setStatus(useMemory ? "Recalling memories" : "Running standard audit");
 
-      // Remove welcome card if present
-      const welcome = document.getElementById("welcomeCard");
-      if (welcome) welcome.remove();
+      const empty = document.getElementById("emptyChatState");
+      if (empty) empty.remove();
 
       try {
         const res = await fetch("/api/investigate", {
@@ -818,35 +850,35 @@
         });
 
         const data = await res.json();
-        renderInvestigationResult(data);
+        renderInvestigationResult(data, question);
         updateInspector(data);
-        setStatus("Investigation complete (" + data.timings.total_ms + "ms)");
+        setStatus("Complete (" + data.timings.total_ms + "ms)");
       } catch (err) {
         setStatus("Investigation failed: " + err.message);
       } finally {
-        isBusy = false;
+        isExecuting = false;
         document.getElementById("runBtn").disabled = false;
       }
     }
 
-    function renderInvestigationResult(data) {
+    function renderInvestigationResult(data, question) {
       const chatScroll = document.getElementById("chatScroll");
       const card = document.createElement("div");
       card.className = "investigation-card";
 
-      // Meta header
+      // Header row
       const meta = document.createElement("div");
       meta.className = "investigation-meta";
       const qSpan = document.createElement("span");
-      qSpan.className = "query-text";
-      qSpan.innerText = "Inquiry: " + (document.getElementById("questionInput").value || "South W13 Revenue Drop");
+      qSpan.className = "query-heading";
+      qSpan.innerText = question;
       const modeSpan = document.createElement("span");
       modeSpan.innerText = data.use_memory ? "Memory on" : "Memory off";
       meta.appendChild(qSpan);
       meta.appendChild(modeSpan);
       card.appendChild(meta);
 
-      // Diagnostic Tool Trace Table
+      // Trace table
       const traceSec = document.createElement("div");
       traceSec.className = "trace-section";
 
@@ -855,20 +887,17 @@
       table.innerHTML = `
         <thead>
           <tr>
-            <th style="width: 45px;">Step</th>
-            <th style="width: 170px;">Tool</th>
+            <th style="width: 50px;">Step</th>
+            <th style="width: 190px;">Tool</th>
             <th>Finding</th>
-            <th style="width: 65px; text-align: right;">Time</th>
+            <th style="width: 70px; text-align: right;">Time</th>
           </tr>
         </thead>
         <tbody>
           ${data.tool_trace.map(t => `
             <tr>
               <td>${t.step_index}</td>
-              <td>
-                <span class="tool-name-code">${t.tool}</span>
-                ${t.root_cause_confirmed ? '<span class="hit-badge">Confirmed</span>' : ''}
-              </td>
+              <td><span class="tool-code">${t.tool}</span></td>
               <td>${t.findings}</td>
               <td style="text-align: right;">${t.execution_time_ms}ms</td>
             </tr>
@@ -881,20 +910,18 @@
       summaryLine.className = "trace-summary-line";
       summaryLine.innerText = data.checks_summary;
       traceSec.appendChild(summaryLine);
-
       card.appendChild(traceSec);
 
-      // Standout Answer Box
+      // Answer box
       const answerBox = document.createElement("div");
       answerBox.className = "answer-box";
       answerBox.innerHTML = `
         <div class="answer-label">${data.stakeholder_format_used}</div>
-        <div class="answer-content">${data.answer}</div>
+        <div class="answer-text">${data.answer}</div>
       `;
       card.appendChild(answerBox);
 
       chatScroll.appendChild(card);
-      chatScroll.scrollTop = chatScroll.scrollHeight;
     }
 
     function updateInspector(data) {
@@ -902,15 +929,13 @@
       const recallEmpty = document.getElementById("recallEmptyState");
       const recallContainer = document.getElementById("recallItemsContainer");
       const reflectionContainer = document.getElementById("reflectionContainer");
-      const reflectionText = document.getElementById("reflectionText");
+      const reflectionContent = document.getElementById("reflectionContent");
 
       recallContainer.innerHTML = "";
 
       if (!data.use_memory || !data.recall_results || data.recall_results.length === 0) {
         recallEmpty.style.display = "block";
-        recallEmpty.innerText = data.use_memory
-          ? "No memories yet. This investigation ran as a cold start."
-          : "Memory is OFF. No institutional memory recall occurred.";
+        recallEmpty.innerText = "No memories yet.";
         reflectionContainer.style.display = "none";
       } else {
         recallEmpty.style.display = "none";
@@ -929,7 +954,7 @@
 
         if (data.reflection) {
           reflectionContainer.style.display = "block";
-          reflectionText.innerText = data.reflection;
+          reflectionContent.innerText = data.reflection;
         } else {
           reflectionContainer.style.display = "none";
         }
@@ -942,42 +967,40 @@
 
       if (!data.use_memory || !data.retained_payloads || data.retained_payloads.length === 0) {
         retainedEmpty.style.display = "block";
-        retainedEmpty.innerText = data.use_memory
-          ? "No new memories retained."
-          : "Memory was OFF. No memories were retained to bank.";
+        retainedEmpty.innerText = "No memories retained from recent run.";
       } else {
         retainedEmpty.style.display = "none";
-        data.retained_payloads.forEach(m => {
+        data.retained_payloads.forEach(p => {
           const item = document.createElement("div");
           item.className = "memory-item";
           item.innerHTML = `
             <div class="memory-meta">
-              <span class="memory-type">${m.type || 'observation'}</span>
-              <span class="memory-context">${m.context || ''}</span>
+              <span class="memory-type">${p.type || 'observation'}</span>
+              <span class="memory-context">${p.context || ''}</span>
             </div>
-            <div class="memory-text">${m.text}</div>
+            <div class="memory-text">${p.text}</div>
+            <div class="payload-json">${JSON.stringify(p.metadata || {}, null, 2)}</div>
           `;
           retainedContainer.appendChild(item);
         });
       }
 
-      // Auto-switch to recall tab
       if (activeTab === "recall") {
         switchTab("recall");
       }
     }
 
-    async function loadMemoryBank() {
+    async function loadBankMemories() {
       try {
         const res = await fetch("/api/memories");
         const data = await res.json();
-        document.getElementById("bankCountLabel").innerText = "Total memories: " + data.total;
+        document.getElementById("bankTotalCount").innerText = "Total memories: " + data.total;
 
         const container = document.getElementById("bankItemsContainer");
         container.innerHTML = "";
 
         if (data.total === 0) {
-          container.innerHTML = `<div class="empty-state">Memory bank is currently empty.</div>`;
+          container.innerHTML = `<div class="empty-state">Memory bank is empty.</div>`;
           return;
         }
 
@@ -994,21 +1017,20 @@
           container.appendChild(item);
         });
       } catch (err) {
-        document.getElementById("bankItemsContainer").innerHTML =
-          `<div class="empty-state">Failed to load memory bank.</div>`;
+        document.getElementById("bankItemsContainer").innerHTML = `<div class="empty-state">Failed to load memories.</div>`;
       }
     }
 
     async function resetMemoryBank() {
-      if (!confirm("Reset memory bank? All institutional memories will be cleared.")) return;
       setStatus("Resetting memory bank...");
       try {
         const res = await fetch("/api/reset-memory", { method: "POST" });
         const data = await res.json();
         setStatus(data.message);
-        loadMemoryBank();
+        loadBankMemories();
         switchTab("recall");
-        document.getElementById("recallEmptyState").innerText = "No memories yet. Bank is empty.";
+        document.getElementById("recallEmptyState").innerText = "No memories yet.";
+        document.getElementById("recallEmptyState").style.display = "block";
         document.getElementById("recallItemsContainer").innerHTML = "";
         document.getElementById("reflectionContainer").style.display = "none";
       } catch (err) {
@@ -1017,74 +1039,85 @@
     }
 
     async function seedDemoHistory() {
-      setStatus("Seeding demo history (Runs 1 to 4 on live pipeline)...");
+      setStatus("Loading demo history...");
       try {
         const res = await fetch("/api/seed-demo", { method: "POST" });
         const data = await res.json();
-        setStatus("Seeded 4 demo runs successfully. Prime for Run 5.");
-        loadMemoryBank();
+        setStatus("Demo history loaded (Runs 1 to 4). Bank ready for Run 5.");
+        loadBankMemories();
         switchTab("bank");
       } catch (err) {
-        setStatus("Failed to seed demo history: " + err.message);
+        setStatus("Failed to load demo history: " + err.message);
       }
     }
 
-    async function runComparison() {
+    async function runCompareView() {
       const question = "Why did revenue drop 19% in the South region in W13?";
-      setStatus("Executing side-by-side comparison for Run 5...");
+      setStatus("Running side-by-side comparison...");
+
+      const empty = document.getElementById("emptyChatState");
+      if (empty) empty.remove();
 
       const chatScroll = document.getElementById("chatScroll");
       const compCard = document.createElement("div");
-      compCard.className = "compare-container";
-      compCard.innerHTML = `<div style="font-weight: 600; font-size: 13px;">Comparison: "${question}"</div>`;
+      compCard.className = "compare-card";
 
-      const cols = document.createElement("div");
-      cols.className = "compare-columns";
-
-      // 1. Run with Memory ON
-      const resOn = await fetch("/api/investigate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: true })
-      }).then(r => r.json());
-
-      // 2. Run with Memory OFF
-      const resOff = await fetch("/api/investigate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: false })
-      }).then(r => r.json());
-
-      cols.innerHTML = `
-        <div class="compare-col">
-          <div class="compare-header">
-            <span>Memory ON</span>
-            <span class="stat-pill">${resOn.tool_trace.length} tools • ${resOn.timings.total_ms}ms</span>
-          </div>
-          <div style="font-size: 12px; color: var(--muted);">${resOn.checks_summary}</div>
-          <div class="answer-box" style="margin-top: 6px;">
-            <div class="answer-label">${resOn.stakeholder_format_used}</div>
-            <div class="answer-content">${resOn.answer}</div>
-          </div>
-        </div>
-
-        <div class="compare-col">
-          <div class="compare-header">
-            <span>Memory OFF (Stateless)</span>
-            <span class="stat-pill">${resOff.tool_trace.length} tools • ${resOff.timings.total_ms}ms</span>
-          </div>
-          <div style="font-size: 12px; color: var(--muted);">${resOff.checks_summary}</div>
-          <div class="answer-box" style="margin-top: 6px; background: #FFFFFF; border-color: var(--border);">
-            <div class="answer-label">${resOff.stakeholder_format_used}</div>
-            <div class="answer-content">${resOff.answer}</div>
-          </div>
-        </div>
+      const header = document.createElement("div");
+      header.className = "compare-header";
+      header.innerHTML = `
+        <span class="query-heading">Comparison: "${question}"</span>
+        <span class="status-text">Finance Head</span>
       `;
+      compCard.appendChild(header);
 
-      compCard.appendChild(cols);
-      chatScroll.appendChild(compCard);
-      chatScroll.scrollTop = chatScroll.scrollHeight;
-      setStatus("Comparison completed.");
+      try {
+        // Run Memory ON
+        const resOn = await fetch("/api/investigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: true })
+        }).then(r => r.json());
+
+        // Run Memory OFF
+        const resOff = await fetch("/api/investigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question, stakeholder: "Finance Head", use_memory: false })
+        }).then(r => r.json());
+
+        const grid = document.createElement("div");
+        grid.className = "compare-grid";
+        grid.innerHTML = `
+          <div class="compare-pane">
+            <div class="compare-pane-title">
+              <span>Memory on</span>
+              <span class="compare-meta-stat">${resOn.tool_trace.length} tools • ${resOn.timings.total_ms}ms</span>
+            </div>
+            <div class="trace-summary-line">${resOn.checks_summary}</div>
+            <div class="answer-box" style="margin-top: 4px;">
+              <div class="answer-label">${resOn.stakeholder_format_used}</div>
+              <div class="answer-text">${resOn.answer}</div>
+            </div>
+          </div>
+
+          <div class="compare-pane">
+            <div class="compare-pane-title">
+              <span>Memory off</span>
+              <span class="compare-meta-stat">${resOff.tool_trace.length} tools • ${resOff.timings.total_ms}ms</span>
+            </div>
+            <div class="trace-summary-line">${resOff.checks_summary}</div>
+            <div class="answer-box-plain" style="margin-top: 4px;">
+              <div class="answer-label-muted">${resOff.stakeholder_format_used}</div>
+              <div class="answer-text">${resOff.answer}</div>
+            </div>
+          </div>
+        `;
+        compCard.appendChild(grid);
+        chatScroll.appendChild(compCard);
+        setStatus("Comparison complete.");
+      } catch (err) {
+        setStatus("Comparison failed: " + err.message);
+      }
     }
   </script>
 </body>

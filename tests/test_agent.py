@@ -59,7 +59,7 @@ def test_five_tools_case_5():
 
 def test_memory_off_runs_all_five_tools():
     """With memory OFF, all 5 diagnostic checks run in default audit order."""
-    agent = WhyDeskAgent()
+    agent = WhyDeskAgent(memory=LocalMemoryFallback())
     out = agent.investigate(
         question="Why did revenue drop 18% in the South region in W10?",
         stakeholder="Senior Analyst",
@@ -73,7 +73,7 @@ def test_memory_off_runs_all_five_tools():
 
 def test_early_stop_with_memory_on():
     """With memory ON and confirmed regional patterns, agent stops early once cause is found."""
-    mem = WhyDeskMemory()
+    mem = LocalMemoryFallback()
     mem.reset_bank()
     agent = WhyDeskAgent(memory=mem)
 
@@ -105,7 +105,7 @@ def test_early_stop_with_memory_on():
 
 def test_numbers_from_tools_only():
     """Every dollar figure and percentage in the answer must strictly come from tool output."""
-    agent = WhyDeskAgent()
+    agent = WhyDeskAgent(memory=LocalMemoryFallback())
     out = agent.investigate(
         question="Why did revenue drop 19% in the South region in W13?",
         stakeholder="Senior Analyst",
@@ -117,7 +117,7 @@ def test_numbers_from_tools_only():
 
 def test_finance_head_one_line_check():
     """Finance Head receives exactly one single line containing the exact dollar impact."""
-    agent = WhyDeskAgent()
+    agent = WhyDeskAgent(memory=LocalMemoryFallback())
     out = agent.investigate(
         question="Why did revenue drop 19% in the South region in W13?",
         stakeholder="Finance Head",

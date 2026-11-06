@@ -18,6 +18,7 @@ class LocalMemoryFallback:
     def __init__(self, bank_id: str = "whydesk-local-bank"):
         self.bank_id = bank_id
         self.memories: List[Dict[str, Any]] = []
+        self.backend_type = "Local simulation"
 
     def ensure_bank(self) -> None:
         pass
